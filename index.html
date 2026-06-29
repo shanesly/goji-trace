@@ -179,6 +179,60 @@
         .person-info .name { font-size: 15px; font-weight: 600; }
         .person-info .phone { font-size: 12px; color: #999; }
 
+        /* ===== 影像区 ===== */
+        .media-section { padding: 16px; }
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .media-item {
+            border-radius: 10px;
+            overflow: hidden;
+            background: #f5f0e8;
+            aspect-ratio: 1;
+            position: relative;
+        }
+        .media-item img, .media-item video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .media-item .caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.55);
+            color: #fff;
+            font-size: 11px;
+            padding: 4px 8px;
+            text-align: center;
+        }
+        .media-item .play-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%,-50%);
+            width: 40px;
+            height: 40px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 18px;
+            pointer-events: none;
+        }
+        .media-empty {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: #ccc;
+            font-size: 13px;
+            padding: 30px;
+        }
+
         /* ===== 二维码区 ===== */
         .qr-section {
             text-align: center;
@@ -389,6 +443,18 @@
         </div>
     </div>
 
+    <!-- 实地影像 -->
+    <div class="section">
+        <div class="section-title">
+            <span class="icon">📸</span> 实地影像
+        </div>
+        <div class="media-section">
+            <div class="media-grid" id="media-grid">
+                <!-- JS动态渲染 -->
+            </div>
+        </div>
+    </div>
+
     <!-- 二维码 -->
     <div class="section qr-section">
         <div class="tip">📱 微信扫一扫，查看完整溯源信息</div>
@@ -438,6 +504,15 @@
 
         <label>责任人电话（建议脱敏显示）</label>
         <input id="admin-phone" placeholder="例如：138****6789">
+
+        <div style="border-top:1px dashed #ddd;margin:12px 0;padding-top:12px;">
+            <label>📸 实地影像（一行一个，格式：类型 | 图片/视频URL | 说明文字）</label>
+            <textarea id="admin-media" placeholder="photo | https://example.com/枸杞地.jpg | 6月枸杞长势&#10;video | https://example.com/采摘.mp4 | 人工采摘现场&#10;photo | https://example.com/晾晒.jpg | 自然晾晒&#10;photo | https://example.com/成品.jpg | 干果成品" style="height:100px;"></textarea>
+            <p style="font-size:11px;color:#999;margin:4px 0 0 0;">
+                ⚠️ 图片/视频需要先上传到图床（推荐 sm.ms 或 imgur.com），粘贴直链即可。<br>
+                类型填 <b>photo</b>（照片）或 <b>video</b>（视频）
+            </p>
+        </div>
 
         <div style="border-top:1px dashed #ddd;margin:12px 0;padding-top:12px;">
             <label>农事记录（一行一条，格式：日期 | 操作 | 详情）</label>
@@ -509,7 +584,11 @@ const defaultData = {
     "追溯码": "QH-GQ-2026-00382",
     "检测证号": "QH-GQ-2026-00382",
     "检测机构": "青海省农产品质量安全检测中心",
-    "检测日期": "2026-07-05"
+    "检测日期": "2026-07-05",
+    "实地影像": [
+        { "类型": "photo", "URL": "", "说明": "请替换为你的图片链接" },
+        { "类型": "photo", "URL": "", "说明": "请替换为你的图片链接" }
+    ]
 };
 
 // ==================== 渲染函数 ====================
@@ -551,11 +630,42 @@ function renderAll(data) {
     document.getElementById('person-phone').textContent = data['责任人']['电话'];
     document.getElementById('person-avatar').textContent = data['责任人']['姓名'][0];
 
+    // 实地影像
+    renderMedia(data['实地影像'] || []);
+
     // 追溯码
     document.getElementById('code-display').textContent = '追溯码: ' + data['追溯码'];
 
     // 二维码
     generateQR(data['追溯码']);
+}
+
+function renderMedia(mediaList) {
+    const grid = document.getElementById('media-grid');
+    if (!mediaList || mediaList.length === 0) {
+        grid.innerHTML = '<div class="media-empty">暂无实地影像</div>';
+        return;
+    }
+    let html = '';
+    mediaList.forEach(function(m) {
+        if (!m['URL'] || !m['URL'].trim()) return;
+        html += '<div class="media-item">';
+        if (m['类型'] === 'video') {
+            html += '<video src="' + m['URL'] + '" controls preload="metadata" playsinline></video>';
+            html += '<div class="play-icon">▶</div>';
+        } else {
+            html += '<img src="' + m['URL'] + '" alt="' + (m['说明'] || '') + '" loading="lazy" onerror="this.parentElement.style.display=\'none\'">';
+        }
+        if (m['说明']) {
+            html += '<div class="caption">' + m['说明'] + '</div>';
+        }
+        html += '</div>';
+    });
+    if (!html.trim()) {
+        grid.innerHTML = '<div class="media-empty">暂无实地影像</div>';
+    } else {
+        grid.innerHTML = html;
+    }
 }
 
 function renderTimeline(elId, records, mainField, subField) {
@@ -627,6 +737,8 @@ function toggleAdmin() {
         document.getElementById('admin-farming').value = (currentData['农事记录'] || []).map(r => r['日期'] + ' | ' + r['操作'] + ' | ' + r['详情']).join('\n');
         document.getElementById('admin-fertilizer').value = (currentData['施肥记录'] || []).map(r => r['日期'] + ' | ' + r['肥料'] + ' | ' + r['用量'] + ' | ' + r['方法']).join('\n');
         document.getElementById('admin-pesticide').value = (currentData['植保记录'] || []).map(r => r['日期'] + ' | ' + r['药剂'] + ' | ' + r['用量'] + ' | ' + r['对象'] + ' | ' + r['安全间隔期']).join('\n');
+        // 实地影像转文本
+        document.getElementById('admin-media').value = (currentData['实地影像'] || []).map(r => r['类型'] + ' | ' + (r['URL'] || '') + ' | ' + (r['说明'] || '')).join('\n');
         panel.classList.add('show');
     }
 }
@@ -658,6 +770,8 @@ function applyFormData() {
     currentData['农事记录'] = parseTimelineLines(document.getElementById('admin-farming').value, ['日期', '操作', '详情']);
     currentData['施肥记录'] = parseTimelineLines(document.getElementById('admin-fertilizer').value, ['日期', '肥料', '用量', '方法']);
     currentData['植保记录'] = parseTimelineLines(document.getElementById('admin-pesticide').value, ['日期', '药剂', '用量', '对象', '安全间隔期']);
+    // 解析实地影像
+    currentData['实地影像'] = parseTimelineLines(document.getElementById('admin-media').value, ['类型', 'URL', '说明']);
 
     localStorage.setItem('gojiData', JSON.stringify(currentData));
     renderAll(currentData);
