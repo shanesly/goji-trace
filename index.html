@@ -355,7 +355,7 @@
 <div class="cert-header">
     <h1>🍂 枸杞产地溯源档案</h1>
     <div class="subtitle" id="header-subtitle">青海省 · 德令哈 · 诺木洪农场</div>
-    <div class="cert-badge">✓ 产地环境检测证  QH-GQ-2026-00382</div>
+    <div class="cert-badge" id="cert-badge">✓ 产地环境检测证  QH-GQ-2026-00382</div>
 </div>
 
 <div class="container">
@@ -476,9 +476,13 @@
         <h3>📝 编辑种植档案</h3>
 
         <div style="background:#fef3e2;border-radius:8px;padding:12px;margin-bottom:16px;">
-            <label style="margin-top:0;font-weight:700;color:#6B3410;">🔑 追溯码 / 检测证号</label>
-            <input id="admin-code" placeholder="例如：NMH-2026-001" style="font-size:16px;font-weight:700;text-align:center;letter-spacing:2px;">
-            <p style="font-size:11px;color:#999;margin:4px 0 0 0;">这个编号会显示在页面上，也会编码进二维码里</p>
+            <label style="margin-top:0;font-weight:700;color:#6B3410;">🔑 追溯码</label>
+            <input id="admin-code" placeholder="例如：NMH-2026-001" style="font-size:15px;font-weight:700;text-align:center;letter-spacing:1px;">
+            <p style="font-size:11px;color:#999;margin:4px 0 8px 0;">消费者扫码后看到的编号，会编码进二维码</p>
+
+            <label style="margin-top:8px;font-weight:700;color:#6B3410;">📜 产地环境检测证号</label>
+            <input id="admin-cert" placeholder="例如：QH-GQ-2026-00382" style="font-size:15px;font-weight:700;text-align:center;letter-spacing:1px;">
+            <p style="font-size:11px;color:#999;margin:4px 0 0 0;">显示在页面顶部的绿色徽章中</p>
         </div>
 
         <label>产地</label>
@@ -630,6 +634,9 @@ function renderAll(data) {
     document.getElementById('person-phone').textContent = data['责任人']['电话'];
     document.getElementById('person-avatar').textContent = data['责任人']['姓名'][0];
 
+    // 检测证编号
+    document.getElementById('cert-badge').textContent = '✓ 产地环境检测证  ' + (data['检测证号'] || '');
+
     // 实地影像
     renderMedia(data['实地影像'] || []);
 
@@ -725,6 +732,7 @@ function toggleAdmin() {
         // 读取当前数据填入表单
         const currentData = JSON.parse(localStorage.getItem('gojiData') || JSON.stringify(defaultData));
         document.getElementById('admin-code').value = currentData['追溯码'] || '';
+        document.getElementById('admin-cert').value = currentData['检测证号'] || '';
         document.getElementById('admin-origin').value = currentData['地块信息']['产地'] || '';
         document.getElementById('admin-parcel').value = currentData['地块信息']['地块编号'] || '';
         document.getElementById('admin-variety').value = currentData['地块信息']['种植品种'] || '';
@@ -757,7 +765,7 @@ function applyFormData() {
     const currentData = JSON.parse(localStorage.getItem('gojiData') || JSON.stringify(defaultData));
     // 更新核心字段
     currentData['追溯码'] = document.getElementById('admin-code').value.trim();
-    currentData['检测证号'] = document.getElementById('admin-code').value.trim();
+    currentData['检测证号'] = document.getElementById('admin-cert').value.trim();
     currentData['地块信息']['产地'] = document.getElementById('admin-origin').value.trim();
     currentData['地块信息']['地块编号'] = document.getElementById('admin-parcel').value.trim();
     currentData['地块信息']['种植品种'] = document.getElementById('admin-variety').value.trim();
