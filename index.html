@@ -592,8 +592,9 @@ function renderPesticide(elId, records) {
 
 function generateQR(code) {
     document.getElementById('qrcode').innerHTML = '';
-    // 二维码指向当前页面自身（实际部署时改为服务器URL）
-    const url = window.location.href.split('?')[0] + '?code=' + encodeURIComponent(code);
+    // 二维码指向GitHub Pages公网地址，微信扫码可直接打开
+    const baseURL = 'https://shanesly.github.io/goji-trace/';
+    const url = baseURL + '?code=' + encodeURIComponent(code);
     new QRCode(document.getElementById('qrcode'), {
         text: url,
         width: 180,
