@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>枸杞溯源档案 - 一证一码</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: #f5f0e8;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* ===== 顶部证书区 ===== */
+        .cert-header {
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #6B3410 100%);
+            color: #fff;
+            padding: 24px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .cert-header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.3;
+        }
+        .cert-header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 1;
+        }
+        .cert-header .subtitle {
+            font-size: 13px;
+            opacity: 0.85;
+            margin-top: 4px;
+            position: relative;
+            z-index: 1;
+        }
+        .cert-badge {
+            display: inline-block;
+            background: #FFD700;
+            color: #6B3410;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            margin-top: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ===== 内容区 ===== */
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 0 16px 24px;
+        }
+
+        .section {
+            background: #fff;
+            border-radius: 12px;
+            margin-top: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 16px;
+            font-size: 16px;
+            font-weight: 700;
+            border-bottom: 1px solid #f0ebe0;
+            color: #6B3410;
+        }
+        .section-title .icon { font-size: 20px; }
+
+        /* 信息行 */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1px;
+            background: #f5f0e8;
+        }
+        .info-item {
+            background: #fff;
+            padding: 12px 14px;
+        }
+        .info-item.full { grid-column: 1 / -1; }
+        .info-item .label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 3px;
+        }
+        .info-item .value {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* 时间线 */
+        .timeline { padding: 12px 16px; }
+        .timeline-item {
+            display: flex;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px dashed #eee;
+        }
+        .timeline-item:last-child { border-bottom: none; }
+        .timeline-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #8B4513;
+            flex-shrink: 0;
+            margin-top: 5px;
+        }
+        .timeline-date {
+            font-size: 12px;
+            color: #8B4513;
+            font-weight: 600;
+            min-width: 80px;
+        }
+        .timeline-content {
+            font-size: 13px;
+            color: #555;
+        }
+        .timeline-content .tag {
+            display: inline-block;
+            background: #fef3e2;
+            color: #8B4513;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 4px;
+        }
+
+        /* 检测结果 */
+        .test-result {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            border-bottom: 1px solid #f5f0e8;
+        }
+        .test-result:last-child { border-bottom: none; }
+        .test-name { font-size: 14px; }
+        .test-value { font-size: 14px; font-weight: 600; }
+        .test-value.pass { color: #2e7d32; }
+        .test-value.nd { color: #666; }
+
+        /* 责任人 */
+        .person-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+        }
+        .person-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #8B4513;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .person-info .name { font-size: 15px; font-weight: 600; }
+        .person-info .phone { font-size: 12px; color: #999; }
+
+        /* ===== 二维码区 ===== */
+        .qr-section {
+            text-align: center;
+            padding: 20px;
+            margin-top: 16px;
+        }
+        .qr-section .tip {
+            font-size: 13px;
+            color: #999;
+            margin-bottom: 12px;
+        }
+        #qrcode {
+            display: inline-block;
+            background: #fff;
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+        }
+        .qr-section .code-text {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #6B3410;
+            font-family: monospace;
+            letter-spacing: 1px;
+        }
+
+        /* 底部 */
+        .footer {
+            text-align: center;
+            padding: 16px;
+            font-size: 11px;
+            color: #bbb;
+        }
+
+        /* ===== 管理面板 ===== */
+        .admin-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #8B4513;
+            color: #fff;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(139,69,19,0.4);
+            z-index: 999;
+        }
+        .admin-panel {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .admin-panel.show { display: flex; }
+        .admin-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 480px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .admin-card h3 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: #6B3410;
+        }
+        .admin-card label {
+            display: block;
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 4px;
+            margin-top: 12px;
+        }
+        .admin-card input, .admin-card textarea, .admin-card select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .admin-card textarea { height: 80px; resize: vertical; }
+        .admin-card .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-primary { background: #8B4513; color: #fff; }
+        .btn-secondary { background: #f0ebe0; color: #6B3410; }
+        .btn-export { background: #2e7d32; color: #fff; }
+
+        /* 打印样式 */
+        @media print {
+            .admin-toggle, .admin-panel { display: none !important; }
+            body { background: #fff; }
+            .section { box-shadow: none; border: 1px solid #ddd; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ========== 证书头部 ========== -->
+<div class="cert-header">
+    <h1>🍂 枸杞产地溯源档案</h1>
+    <div class="subtitle" id="header-subtitle">青海省 · 德令哈 · 诺木洪农场</div>
+    <div class="cert-badge">✓ 产地环境检测证  QH-GQ-2026-00382</div>
+</div>
+
+<div class="container">
+
+    <!-- 地块基本信息 -->
+    <div class="section">
+        <div class="section-title">
+            <span class="icon">📍</span> 地块信息
+        </div>
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="label">地块编号</div>
+                <div class="value" id="parcel-id">NMH-003-A</div>
+            </div>
+            <div class="info-item">
+                <div class="label">种植品种</div>
+                <div class="value" id="variety">宁杞7号</div>
+            </div>
+            <div class="info-item">
+                <div class="label">种植面积</div>
+                <div class="value" id="area">50 亩</div>
+            </div>
+            <div class="info-item">
+                <div class="label">海拔高度</div>
+                <div class="value" id="altitude">2,860 米</div>
+            </div>
+            <div class="info-item full">
+                <div class="label">地理坐标</div>
+                <div class="value" id="coords">36°26'12"N  96°25'38"E</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 农事记录时间线 -->
+    <div class="section">
+        <div class="section-title">
+            <span class="icon">📋</span> 农事操作记录
+        </div>
+        <div class="timeline" id="timeline">
+            <!-- JS动态渲染 -->
+        </div>
+    </div>
+
+    <!-- 施肥记录 -->
+    <div class="section">
+        <div class="section-title">
+            <span class="icon">🌱</span> 施肥记录
+        </div>
+        <div class="timeline" id="fertilizer-timeline">
+            <!-- JS动态渲染 -->
+        </div>
+    </div>
+
+    <!-- 植保记录 -->
+    <div class="section">
+        <div class="section-title">
+            <span class="icon">🛡️</span> 植保（施药）记录
+        </div>
+        <div class="timeline" id="pesticide-timeline">
+            <!-- JS动态渲染 -->
+        </div>
+    </div>
+
+    <!-- 检测结果 -->
+    <div class="section">
+        <div class="section-title">
+            <span class="icon">🔬</span> 产品检测结果
+        </div>
+        <div id="test-results">
+            <!-- JS动态渲染 -->
+        </div>
+    </div>
+
+    <!-- 责任人 -->
+    <div class="section">
+        <div class="section-title">
+            <span class="icon">👤</span> 生产责任人
+        </div>
+        <div class="person-card">
+            <div class="person-avatar" id="person-avatar">张</div>
+            <div class="person-info">
+                <div class="name" id="person-name">张三</div>
+                <div class="phone" id="person-phone">138****6789</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 二维码 -->
+    <div class="section qr-section">
+        <div class="tip">📱 微信扫一扫，查看完整溯源信息</div>
+        <div id="qrcode"></div>
+        <div class="code-text" id="code-display">QH-GQ-2026-00382</div>
+    </div>
+
+    <div class="footer">
+        青海省枸杞产业协会 · 农产品质量安全追溯体系<br>
+        本档案数据由生产者自主填报，接受社会监督
+    </div>
+</div>
+
+<!-- ========== 管理面板 ========== -->
+<button class="admin-toggle" onclick="toggleAdmin()" title="编辑数据">✎</button>
+
+<div class="admin-panel" id="admin-panel">
+    <div class="admin-card">
+        <h3>📝 编辑种植档案</h3>
+
+        <div style="background:#fef3e2;border-radius:8px;padding:12px;margin-bottom:16px;">
+            <label style="margin-top:0;font-weight:700;color:#6B3410;">🔑 追溯码 / 检测证号</label>
+            <input id="admin-code" placeholder="例如：NMH-2026-001" style="font-size:16px;font-weight:700;text-align:center;letter-spacing:2px;">
+            <p style="font-size:11px;color:#999;margin:4px 0 0 0;">这个编号会显示在页面上，也会编码进二维码里</p>
+        </div>
+
+        <label>产地</label>
+        <input id="admin-origin" placeholder="例如：青海省·德令哈·诺木洪">
+
+        <label>地块编号</label>
+        <input id="admin-parcel" placeholder="例如：NMH-003-A">
+
+        <label>种植品种</label>
+        <input id="admin-variety" placeholder="例如：宁杞7号">
+
+        <label>种植面积</label>
+        <input id="admin-area" placeholder="例如：50 亩">
+
+        <label>海拔高度</label>
+        <input id="admin-altitude" placeholder="例如：2,860 米">
+
+        <label>地理坐标</label>
+        <input id="admin-coords" placeholder="例如：36°26'12&quot;N  96°25'38&quot;E">
+
+        <label>责任人姓名</label>
+        <input id="admin-person" placeholder="例如：张三">
+
+        <label>责任人电话（建议脱敏显示）</label>
+        <input id="admin-phone" placeholder="例如：138****6789">
+
+        <div style="border-top:1px dashed #ddd;margin:12px 0;padding-top:12px;">
+            <label>农事记录（一行一条，格式：日期 | 操作 | 详情）</label>
+            <textarea id="admin-farming" placeholder="2026-04-10 | 春季修剪 | 剪除枯枝弱枝&#10;2026-04-20 | 春灌 | 大水漫灌80m³/亩&#10;2026-05-05 | 中耕除草 | 人工除草"></textarea>
+
+            <label>施肥记录（一行一条，格式：日期 | 肥料 | 用量 | 方法）</label>
+            <textarea id="admin-fertilizer" placeholder="2026-04-15 | 腐熟羊粪 | 2000kg/亩 | 沟施&#10;2026-05-10 | 生物菌肥 | 50kg/亩 | 滴灌"></textarea>
+
+            <label>施药记录（一行一条，格式：日期 | 药剂 | 用量 | 防治对象 | 安全间隔期）</label>
+            <textarea id="admin-pesticide" placeholder="2026-05-01 | 石硫合剂 | 3波美度 | 越冬虫卵 | —&#10;2026-06-10 | 苦参碱 | 800倍液 | 蚜虫 | 7天"></textarea>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn btn-secondary" onclick="toggleAdmin()">取消</button>
+            <button class="btn btn-primary" onclick="applyFormData()">✓ 应用更新</button>
+        </div>
+        <div class="btn-row" style="margin-top:8px;">
+            <button class="btn btn-export" onclick="exportHTML()">📥 导出独立HTML</button>
+            <button class="btn btn-secondary" onclick="switchToJSON()">🔧 切换到JSON模式</button>
+        </div>
+        <p style="font-size:11px;color:#999;margin-top:10px;">
+            💡 修改后点"应用"，页面和二维码会自动刷新。导出的HTML可直接发给印刷厂。
+        </p>
+    </div>
+</div>
+
+<script>
+// ==================== 默认种植数据 ====================
+const defaultData = {
+    "地块信息": {
+        "地块编号": "NMH-003-A",
+        "种植品种": "宁杞7号",
+        "种植面积": "50 亩",
+        "海拔高度": "2,860 米",
+        "地理坐标": "36°26'12\"N  96°25'38\"E",
+        "产地": "青海省·德令哈·诺木洪农场"
+    },
+    "农事记录": [
+        { "日期": "2026-04-10", "操作": "春季修剪", "详情": "剪除枯枝、弱枝，保留强壮结果枝" },
+        { "日期": "2026-04-20", "操作": "春灌", "详情": "大水漫灌1次，灌水量约80m³/亩" },
+        { "日期": "2026-05-05", "操作": "中耕除草", "详情": "人工除草，未使用除草剂" },
+        { "日期": "2026-05-20", "操作": "抹芽定枝", "详情": "每株保留8-10个健壮枝条" },
+        { "日期": "2026-06-15", "操作": "夏季修剪", "详情": "剪除徒长枝，改善通风透光" },
+        { "日期": "2026-07-01", "操作": "首茬采摘", "详情": "人工采摘，晴天上午进行" },
+        { "日期": "2026-07-20", "操作": "二茬采摘", "详情": "人工采摘，果实成熟度≥90%" }
+    ],
+    "施肥记录": [
+        { "日期": "2026-04-15", "肥料": "腐熟羊粪（有机肥）", "用量": "2,000 kg/亩", "方法": "沟施" },
+        { "日期": "2026-05-10", "肥料": "生物菌肥", "用量": "50 kg/亩", "方法": "随水滴灌" },
+        { "日期": "2026-06-01", "肥料": "磷酸二氢钾（叶面肥）", "用量": "0.3%浓度喷施", "方法": "叶面喷施" }
+    ],
+    "植保记录": [
+        { "日期": "2026-05-01", "药剂": "石硫合剂（矿物源）", "用量": "3波美度", "对象": "越冬虫卵、病菌", "安全间隔期": "—" },
+        { "日期": "2026-06-10", "药剂": "苦参碱（植物源）", "用量": "800倍液", "对象": "蚜虫", "安全间隔期": "7天" },
+        { "日期": "2026-06-25", "药剂": "苏云金杆菌(Bt)", "用量": "500倍液", "对象": "枸杞木虱", "安全间隔期": "5天" }
+    ],
+    "检测结果": [
+        { "项目": "铅（Pb）", "标准值": "≤1.0 mg/kg", "检测值": "未检出", "判定": "合格" },
+        { "项目": "镉（Cd）", "标准值": "≤0.1 mg/kg", "检测值": "0.02 mg/kg", "判定": "合格" },
+        { "项目": "二氧化硫", "标准值": "≤50 mg/kg", "检测值": "未检出", "判定": "合格" },
+        { "项目": "百草枯", "标准值": "不得检出", "检测值": "未检出", "判定": "合格" },
+        { "项目": "毒死蜱", "标准值": "不得检出", "检测值": "未检出", "判定": "合格" }
+    ],
+    "责任人": {
+        "姓名": "张三",
+        "电话": "138****6789",
+        "身份证号": "632801********0012"
+    },
+    "追溯码": "QH-GQ-2026-00382",
+    "检测证号": "QH-GQ-2026-00382",
+    "检测机构": "青海省农产品质量安全检测中心",
+    "检测日期": "2026-07-05"
+};
+
+// ==================== 渲染函数 ====================
+function renderAll(data) {
+    // 头部
+    document.getElementById('header-subtitle').textContent = data['地块信息']['产地'];
+    document.getElementById('parcel-id').textContent = data['地块信息']['地块编号'];
+    document.getElementById('variety').textContent = data['地块信息']['种植品种'];
+    document.getElementById('area').textContent = data['地块信息']['种植面积'];
+    document.getElementById('altitude').textContent = data['地块信息']['海拔高度'];
+    document.getElementById('coords').textContent = data['地块信息']['地理坐标'];
+
+    // 农事记录
+    renderTimeline('timeline', data['农事记录'], '操作', '详情');
+    // 施肥记录
+    renderTimeline('fertilizer-timeline', data['施肥记录'], '肥料', '用量');
+    // 植保记录
+    renderPesticide('pesticide-timeline', data['植保记录']);
+
+    // 检测结果
+    let testHTML = '';
+    data['检测结果'].forEach(t => {
+        const cls = t['检测值'] === '未检出' ? 'nd' : 'pass';
+        testHTML += `<div class="test-result">
+            <div>
+                <div class="test-name">${t['项目']}</div>
+                <div style="font-size:11px;color:#999;">标准: ${t['标准值']}</div>
+            </div>
+            <div>
+                <div class="test-value ${cls}">${t['检测值']}</div>
+                <div style="font-size:11px;color:#2e7d32;text-align:right;">${t['判定']}</div>
+            </div>
+        </div>`;
+    });
+    document.getElementById('test-results').innerHTML = testHTML;
+
+    // 责任人
+    document.getElementById('person-name').textContent = data['责任人']['姓名'];
+    document.getElementById('person-phone').textContent = data['责任人']['电话'];
+    document.getElementById('person-avatar').textContent = data['责任人']['姓名'][0];
+
+    // 追溯码
+    document.getElementById('code-display').textContent = '追溯码: ' + data['追溯码'];
+
+    // 二维码
+    generateQR(data['追溯码']);
+}
+
+function renderTimeline(elId, records, mainField, subField) {
+    let html = '';
+    records.forEach(r => {
+        html += `<div class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div class="timeline-date">${r['日期']}</div>
+            <div class="timeline-content">
+                ${r[mainField]}
+                <span class="tag">${r[subField]}</span>
+            </div>
+        </div>`;
+    });
+    document.getElementById(elId).innerHTML = html;
+}
+
+function renderPesticide(elId, records) {
+    let html = '';
+    records.forEach(r => {
+        html += `<div class="timeline-item">
+            <div class="timeline-dot" style="background:#d32f2f;"></div>
+            <div class="timeline-date">${r['日期']}</div>
+            <div class="timeline-content">
+                ${r['药剂']}
+                <span class="tag">${r['用量']}</span>
+                <span class="tag">防治:${r['对象']}</span>
+                <br><span style="font-size:11px;color:#999;">安全间隔期: ${r['安全间隔期']}</span>
+            </div>
+        </div>`;
+    });
+    document.getElementById(elId).innerHTML = html;
+}
+
+function generateQR(code) {
+    document.getElementById('qrcode').innerHTML = '';
+    // 二维码指向当前页面自身（实际部署时改为服务器URL）
+    const url = window.location.href.split('?')[0] + '?code=' + encodeURIComponent(code);
+    new QRCode(document.getElementById('qrcode'), {
+        text: url,
+        width: 180,
+        height: 180,
+        colorDark: '#6B3410',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+    });
+}
+
+// ==================== 管理面板 ====================
+function toggleAdmin() {
+    const panel = document.getElementById('admin-panel');
+    const isShow = panel.classList.contains('show');
+    if (isShow) {
+        panel.classList.remove('show');
+    } else {
+        // 读取当前数据填入表单
+        const currentData = JSON.parse(localStorage.getItem('gojiData') || JSON.stringify(defaultData));
+        document.getElementById('admin-code').value = currentData['追溯码'] || '';
+        document.getElementById('admin-origin').value = currentData['地块信息']['产地'] || '';
+        document.getElementById('admin-parcel').value = currentData['地块信息']['地块编号'] || '';
+        document.getElementById('admin-variety').value = currentData['地块信息']['种植品种'] || '';
+        document.getElementById('admin-area').value = currentData['地块信息']['种植面积'] || '';
+        document.getElementById('admin-altitude').value = currentData['地块信息']['海拔高度'] || '';
+        document.getElementById('admin-coords').value = currentData['地块信息']['地理坐标'] || '';
+        document.getElementById('admin-person').value = currentData['责任人']['姓名'] || '';
+        document.getElementById('admin-phone').value = currentData['责任人']['电话'] || '';
+        // 农事/施肥/施药转文本
+        document.getElementById('admin-farming').value = (currentData['农事记录'] || []).map(r => r['日期'] + ' | ' + r['操作'] + ' | ' + r['详情']).join('\n');
+        document.getElementById('admin-fertilizer').value = (currentData['施肥记录'] || []).map(r => r['日期'] + ' | ' + r['肥料'] + ' | ' + r['用量'] + ' | ' + r['方法']).join('\n');
+        document.getElementById('admin-pesticide').value = (currentData['植保记录'] || []).map(r => r['日期'] + ' | ' + r['药剂'] + ' | ' + r['用量'] + ' | ' + r['对象'] + ' | ' + r['安全间隔期']).join('\n');
+        panel.classList.add('show');
+    }
+}
+
+function parseTimelineLines(text, fields) {
+    if (!text || !text.trim()) return [];
+    return text.trim().split('\n').filter(line => line.trim()).map(line => {
+        const parts = line.split('|').map(s => s.trim());
+        const obj = {};
+        fields.forEach((f, i) => { obj[f] = parts[i] || ''; });
+        return obj;
+    });
+}
+
+function applyFormData() {
+    const currentData = JSON.parse(localStorage.getItem('gojiData') || JSON.stringify(defaultData));
+    // 更新核心字段
+    currentData['追溯码'] = document.getElementById('admin-code').value.trim();
+    currentData['检测证号'] = document.getElementById('admin-code').value.trim();
+    currentData['地块信息']['产地'] = document.getElementById('admin-origin').value.trim();
+    currentData['地块信息']['地块编号'] = document.getElementById('admin-parcel').value.trim();
+    currentData['地块信息']['种植品种'] = document.getElementById('admin-variety').value.trim();
+    currentData['地块信息']['种植面积'] = document.getElementById('admin-area').value.trim();
+    currentData['地块信息']['海拔高度'] = document.getElementById('admin-altitude').value.trim();
+    currentData['地块信息']['地理坐标'] = document.getElementById('admin-coords').value.trim();
+    currentData['责任人']['姓名'] = document.getElementById('admin-person').value.trim();
+    currentData['责任人']['电话'] = document.getElementById('admin-phone').value.trim();
+    // 解析时间线
+    currentData['农事记录'] = parseTimelineLines(document.getElementById('admin-farming').value, ['日期', '操作', '详情']);
+    currentData['施肥记录'] = parseTimelineLines(document.getElementById('admin-fertilizer').value, ['日期', '肥料', '用量', '方法']);
+    currentData['植保记录'] = parseTimelineLines(document.getElementById('admin-pesticide').value, ['日期', '药剂', '用量', '对象', '安全间隔期']);
+
+    localStorage.setItem('gojiData', JSON.stringify(currentData));
+    renderAll(currentData);
+    toggleAdmin();
+}
+
+function switchToJSON() {
+    // 保留旧版JSON编辑能力，方便高级用户
+    const currentData = JSON.parse(localStorage.getItem('gojiData') || JSON.stringify(defaultData));
+    const jsonStr = JSON.stringify(currentData, null, 2);
+    const newVal = prompt('直接编辑JSON数据（高级模式）：', jsonStr);
+    if (newVal) {
+        try {
+            const parsed = JSON.parse(newVal);
+            localStorage.setItem('gojiData', JSON.stringify(parsed));
+            renderAll(parsed);
+            alert('✅ JSON数据已更新！');
+        } catch (e) {
+            alert('❌ JSON格式错误：' + e.message);
+        }
+    }
+}
+
+function exportHTML() {
+    const html = document.documentElement.outerHTML;
+    const blob = new Blob(['<!DOCTYPE html>\n' + html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '枸杞溯源档案_' + new Date().toISOString().slice(0,10) + '.html';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// ==================== 初始化 ====================
+const savedData = JSON.parse(localStorage.getItem('gojiData') || 'null');
+const initData = savedData || defaultData;
+renderAll(initData);
+
+// 支持URL参数加载：?code=QH-GQ-2026-00382
+const urlParams = new URLSearchParams(window.location.search);
+const codeParam = urlParams.get('code');
+if (codeParam) {
+    document.getElementById('code-display').textContent = '追溯码: ' + codeParam;
+}
+
+console.log('🍂 枸杞溯源档案已就绪');
+console.log('💡 点击右下角 ✎ 按钮可编辑所有数据');
+console.log('📥 管理面板中可导出独立HTML文件');
+</script>
+
+</body>
+</html>
