@@ -693,20 +693,35 @@ function exportHTML() {
 }
 
 // ==================== 初始化 ====================
-const savedData = JSON.parse(localStorage.getItem('gojiData') || 'null');
-const initData = savedData || defaultData;
-renderAll(initData);
-
-// 支持URL参数加载：?code=QH-GQ-2026-00382
 const urlParams = new URLSearchParams(window.location.search);
 const codeParam = urlParams.get('code');
+const isAdmin = urlParams.get('admin') === 'true';
+
 if (codeParam) {
     document.getElementById('code-display').textContent = '追溯码: ' + codeParam;
 }
 
-console.log('🍂 枸杞溯源档案已就绪');
-console.log('💡 点击右下角 ✎ 按钮可编辑所有数据');
-console.log('📥 管理面板中可导出独立HTML文件');
+const savedData = JSON.parse(localStorage.getItem('gojiData') || 'null');
+const initData = savedData || defaultData;
+renderAll(initData);
+
+// ===== 消费者扫码看不到编辑按钮 =====
+if (!isAdmin) {
+    const btn = document.querySelector('.admin-toggle');
+    if (btn) btn.style.display = 'none';
+}
+// 管理员快捷键：连续点击页面标题5次弹出管理面板
+let titleClickCount = 0;
+document.querySelector('.cert-header h1').addEventListener('click', function() {
+    titleClickCount++;
+    if (titleClickCount >= 5) {
+        titleClickCount = 0;
+        toggleAdmin();
+    }
+    setTimeout(function() { titleClickCount = 0; }, 2000);
+});
+
+console.log(isAdmin ? '🔧 管理模式已开启' : '🍂 枸杞溯源档案已就绪（消费者视图）');
 </script>
 
 </body>
